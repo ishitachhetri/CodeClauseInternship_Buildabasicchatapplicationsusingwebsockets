@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat App - Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #chat-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #0074D9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #chat-messages {
+            text-align: left;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Room</h1>
+    <div id="chat-container">
+        <div id="chat-messages"></div>
+        <input type="text" id="message" placeholder="Type your message...">
+        <button id="send">Send</button>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message');
+        const sendButton = document.getElementById('send');
+        const roomName = new URLSearchParams(window.location.search).get('room');
+        const username = new URLSearchParams(window.location.search).get('username');
+        document.querySelector('h1').textContent = `Chat Room - ${roomName}`;
+
+        const socket = new WebSocket(`ws://localhost:8765?room=${roomName}&username=${username}`);
+
+        // Function to display a message in the chat
+        function displayMessage(message) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            chatMessages.appendChild(p);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+        }
+
+        // Event handler for incoming messages
+        socket.addEventListener('message', (event) => {
+            const message = JSON.parse(event.data);
+            displayMessage(`${message.username}: ${message.message}`);
+        });
+
+        // Event handler for the "Send" button
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value;
+            if (message.trim() !== '') {
+                const messageData = {
+                    type: 'message',
+                    room: roomName,
+                    username,
+                    message,
+                };
+                socket.send(JSON.stringify(messageData));
+                messageInput.value = '';
+            }
+        });
+    </script>
+</body>
+</html>
